@@ -219,20 +219,6 @@
         .badge-artes { background-color: #e2d5f3; color: #4a2e6b; }
         .badge-default { background-color: #e9ecef; color: #495057; }
 
-        /* scroll suave para la tabla */
-        .table-container::-webkit-scrollbar {
-            height: 6px;
-        }
-        .table-container::-webkit-scrollbar-track {
-            background: #f1f1f1;
-            border-radius: 10px;
-        }
-        .table-container::-webkit-scrollbar-thumb {
-            background: #cbd5e0;
-            border-radius: 10px;
-        }
-
-        /* pie de página */
         .footer-note {
             margin-top: 20px;
             text-align: center;
@@ -244,23 +230,11 @@
 
         @media (max-width: 860px) {
             .kpi-grid {
-                gap: 12px;
+                grid-template-columns: repeat(2, 1fr);
             }
             .filters-container {
                 grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-                gap: 12px;
             }
-            body {
-                padding: 16px;
-            }
-            .detalle-table th, .detalle-table td {
-                padding: 8px 6px;
-                font-size: 0.75rem;
-            }
-        }
-
-        .kpi-value, .chart-card, .kpi-card {
-            transition: all 0.2s ease;
         }
     </style>
 </head>
@@ -271,7 +245,6 @@
     <hr />
 </div>
 
-<!-- KPIs -->
 <div class="kpi-grid">
     <div class="kpi-card">
         <div class="kpi-label">🏫 Planteles</div>
@@ -291,7 +264,6 @@
     </div>
 </div>
 
-<!-- Filtros -->
 <div class="filters-panel">
     <div class="filters-container">
         <div class="filter-item">
@@ -317,19 +289,17 @@
     </div>
 </div>
 
-<!-- Gráficos: dos visualizaciones principales -->
 <div class="charts-section">
     <div class="chart-card">
         <h4>🏆 Top 10 Planteles (frecuencia)</h4>
         <div id="chartPlanteles" style="height: 420px; width: 100%;"></div>
     </div>
     <div class="chart-card">
-        <h4>🥧 Distribución por Semestre</h4>
+        <h4>Pie Distribución por Semestre</h4>
         <div id="chartSemestre" style="height: 420px; width: 100%;"></div>
     </div>
 </div>
 
-<!-- TABLA DE DETALLE DE REGISTROS (como en la imagen) -->
 <div class="table-container">
     <h4>📋 Detalle de Registros</h4>
     <div style="overflow-x: auto;">
@@ -344,168 +314,51 @@
                 </tr>
             </thead>
             <tbody id="tbodyRegistros">
-                <tr><td colspan="5" style="text-align:center;">Cargando datos desde GitHub...</td></tr>
+                <tr><td colspan="5" style="text-align:center;">Cargando datos desde repositorio...</td></tr>
             </tbody>
         </table>
     </div>
 </div>
 
 <div class="footer-note">
-    Panel académico actualizado · Visualización estratégica · Los colores del botón indican área de estudio (Verde: Estudios, Azul: Ciencias, Rojo: Matemáticas, Amarillo: Historia, Fondo: Artes)
+    Panel académico actualizado · Visualización estratégica de datos de repositorio GitHub.
 </div>
 
 <script>
     let dataGlobal = [];
-    // URL relativa: busca el archivo datos.json en el mismo directorio que este index.html (GitHub Pages o repositorio)
+    // Llamada solicitada: busca el archivo en la misma carpeta del sitio.
     const GITHUB_DATA_URL = 'datos.json';
 
     window.onload = function() {
-        // Intentar cargar datos desde GitHub (misma carpeta)
+        // Carga de datos desde GitHub
         fetch(GITHUB_DATA_URL)
             .then(response => {
                 if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: No se pudo cargar datos.json desde el repositorio`);
+                    throw new Error(`HTTP ${response.status}: No se encontró el archivo en el repositorio`);
                 }
                 return response.json();
             })
             .then(json => {
                 if (Array.isArray(json) && json.length) {
                     dataGlobal = json;
-                    console.log("✅ Datos cargados exitosamente desde GitHub (datos.json)");
+                    console.log("✅ Datos cargados exitosamente desde GitHub");
                     initDashboard();
                 } else {
-                    throw new Error("El archivo datos.json no contiene un array válido o está vacío");
+                    throw new Error("Formato de datos no válido");
                 }
             })
             .catch(err => {
-                console.warn("⚠️ Fallo al cargar datos desde GitHub:", err.message);
-                // Intentar recuperar desde localStorage como respaldo
-                let saved = localStorage.getItem("dataAcademicaBackup");
-                if (saved) {
-                    try {
-                        dataGlobal = JSON.parse(saved);
-                        if (dataGlobal.length) {
-                            console.log("💾 Datos restaurados desde localStorage (backup)");
-                            initDashboard();
-                            return;
-                        }
-                    } catch(e) {}
-                }
-                // Si no hay respaldo, generar dataset de demostración (para que el dashboard siempre funcione)
-                console.log("📦 Generando dataset de demostración (el archivo datos.json no está disponible en el repositorio)");
-                dataGlobal = generarDataSetEjemplo();
-                // Guardar copia en localStorage para futuras recargas
-                localStorage.setItem("dataAcademicaBackup", JSON.stringify(dataGlobal));
-                initDashboard();
+                console.error("⚠️ Error al cargar datos:", err.message);
+                document.getElementById('tbodyRegistros').innerHTML = 
+                    `<tr><td colspan="5" style="text-align:center; color:red;">Error al cargar datos.json: ${err.message}</td></tr>`;
             });
     };
 
-    // Función que genera datos académicos de muestra (2025)
-    function generarDataSetEjemplo() {
-        const plantelesList = [
-            "Unidad Norte", "Unidad Sur", "Centro Campus", "Plantel Oriente", "Plantel Poniente",
-            "Instituto Moderno", "Liceo Experimental", "Preparatoria Libertad", "Colegio del Valle",
-            "Academia Tec", "Unidad Satélite", "Prepa 5", "Campus Digital", "Instituto Ágora"
-        ];
-        const semestres = ["Primer Semestre", "Segundo Semestre", "Tercer Semestre", "Cuarto Semestre", "Quinto Semestre", "Sexto Semestre"];
-        const turnos = ["Matutino", "Vespertino", "Nocturno"];
-        const materiasBase = [
-            "Matemáticas", "Literatura", "Historia", "Biología", "Física", "Química", 
-            "Inglés", "Programación", "Economía", "Filosofía", "Arte", "Geografía"
-        ];
-        const docentesBase = [
-            "Mtra. Laura Gómez", "Dr. Raúl Méndez", "Mtro. Carlos Sánchez", "Dra. Patricia Flores",
-            "Mtro. Jorge Ramírez", "Lic. Ana Torres", "Mtra. Silvia Díaz", "Dr. Enrique Castro",
-            "Mtro. Fernando Ortiz", "Dra. Martha Ríos", "Prof. Oscar Juárez", "Mtra. Leticia Vega"
-        ];
-
-        let registros = [];
-        // Agregar registros específicos como en la imagen de ejemplo
-        registros.push({
-            plantel: "Instituto Ágora",
-            semestre: "Primer Semestre",
-            turno: "Vespertino",
-            materia: "Geografía",
-            nombre_doc: "Mtra. Silvia Díaz"
-        });
-        registros.push({
-            plantel: "Plantel Poniente",
-            semestre: "Primer Semestre",
-            turno: "Matutino",
-            materia: "Inglés",
-            nombre_doc: "Mtro. Carlos Sánchez"
-        });
-        registros.push({
-            plantel: "Liceo Experimental",
-            semestre: "Primer Semestre",
-            turno: "Vespertino",
-            materia: "Geografía",
-            nombre_doc: "Prof. Oscar Juárez"
-        });
-        registros.push({
-            plantel: "Unidad Norte",
-            semestre: "Sexto Semestre",
-            turno: "Matutino",
-            materia: "Geografía",
-            nombre_doc: "Mtro. Carlos Sánchez"
-        });
-        registros.push({
-            plantel: "Unidad Sur",
-            semestre: "Cuarto Semestre",
-            turno: "Matutino",
-            materia: "Geografía",
-            nombre_doc: "Mtro. Jorge Ramírez"
-        });
-        registros.push({
-            plantel: "Plantel Oriente",
-            semestre: "Tercer Semestre",
-            turno: "Nocturno",
-            materia: "Arte",
-            nombre_doc: "Mtro. Jorge Ramírez"
-        });
-
-        // Generamos ~250 registros adicionales para que los KPIs y gráficos tengan riqueza
-        for (let i = 0; i < 254; i++) {
-            let plantel = plantelesList[Math.floor(Math.random() * plantelesList.length)];
-            let semestre = semestres[Math.floor(Math.random() * semestres.length)];
-            let turno = turnos[Math.floor(Math.random() * turnos.length)];
-            let materia = materiasBase[Math.floor(Math.random() * materiasBase.length)];
-            let nombre_doc = docentesBase[Math.floor(Math.random() * docentesBase.length)];
-            registros.push({ plantel, semestre, turno, materia, nombre_doc });
-        }
-        // Agregar casos donde un docente tiene más de 3 materias para que se vea la alerta de sobrecarga
-        for (let i = 0; i < 5; i++) {
-            registros.push({
-                plantel: "Unidad Norte",
-                semestre: "Primer Semestre",
-                turno: "Matutino",
-                materia: i === 0 ? "Cálculo" : (i === 1 ? "Álgebra" : (i===2 ? "Trigonometría" : "Estadística")),
-                nombre_doc: "Mtra. Laura Gómez"
-            });
-        }
-        for (let i = 0; i < 4; i++) {
-            registros.push({
-                plantel: "Centro Campus",
-                semestre: "Tercer Semestre",
-                turno: "Vespertino",
-                materia: i === 0 ? "Redacción" : "Lingüística",
-                nombre_doc: "Lic. Ana Torres"
-            });
-        }
-        return registros;
-    }
-
-    // Inicialización después de tener los datos
     function initDashboard() {
-        if (!dataGlobal || dataGlobal.length === 0) {
-            console.warn("No hay datos disponibles");
-            return;
-        }
         poblarFiltros();
         aplicarFiltros();
     }
 
-    // Llenar selects con valores únicos de cada campo
     function poblarFiltros() {
         poblarSelectUnico('fPlantel', 'plantel');
         poblarSelectUnico('fSemestre', 'semestre');
@@ -528,20 +381,16 @@
         select.onchange = () => aplicarFiltros();
     }
 
-    // Obtener objeto con valores de filtros actuales
-    function obtenerValoresFiltros() {
-        return {
-            plantel: document.getElementById('fPlantel')?.value || '',
-            semestre: document.getElementById('fSemestre')?.value || '',
-            turno: document.getElementById('fTurno')?.value || '',
-            materia: document.getElementById('fMateria')?.value || '',
-            docente: document.getElementById('fDocente')?.value || ''
-        };
-    }
-
     function aplicarFiltros() {
-        const filtros = obtenerValoresFiltros();
-        let datosFiltrados = dataGlobal.filter(d =>
+        const filtros = {
+            plantel: document.getElementById('fPlantel').value,
+            semestre: document.getElementById('fSemestre').value,
+            turno: document.getElementById('fTurno').value,
+            materia: document.getElementById('fMateria').value,
+            docente: document.getElementById('fDocente').value
+        };
+
+        const datosFiltrados = dataGlobal.filter(d =>
             (!filtros.plantel || d.plantel === filtros.plantel) &&
             (!filtros.semestre || d.semestre === filtros.semestre) &&
             (!filtros.turno || d.turno === filtros.turno) &&
@@ -554,28 +403,17 @@
         actualizarTablaDetalle(datosFiltrados);
     }
 
-    // Función auxiliar para contar valores únicos
-    function contarUnicos(arr, campo) {
-        const set = new Set();
-        arr.forEach(item => set.add(item[campo]));
-        return set.size;
-    }
-
     function actualizarKPIs(data) {
-        const totalPlanteles = contarUnicos(data, 'plantel');
-        const totalDocentes = contarUnicos(data, 'nombre_doc');
-        const totalMaterias = contarUnicos(data, 'materia');
+        const totalPlanteles = new Set(data.map(d => d.plantel)).size;
+        const totalDocentes = new Set(data.map(d => d.nombre_doc)).size;
+        const totalMaterias = new Set(data.map(d => d.materia)).size;
 
-        // Calcular sobrecarga: docentes con más de 3 asignaciones
         const cargaDocente = new Map();
         data.forEach(reg => {
-            const doc = reg.nombre_doc;
-            cargaDocente.set(doc, (cargaDocente.get(doc) || 0) + 1);
+            cargaDocente.set(reg.nombre_doc, (cargaDocente.get(reg.nombre_doc) || 0) + 1);
         });
         let docentesSobrecarga = 0;
-        for (let cant of cargaDocente.values()) {
-            if (cant > 3) docentesSobrecarga++;
-        }
+        cargaDocente.forEach(val => { if(val > 3) docentesSobrecarga++; });
 
         document.getElementById('kpiPlanteles').innerText = totalPlanteles;
         document.getElementById('kpiDocentes').innerText = totalDocentes;
@@ -583,141 +421,63 @@
         document.getElementById('kpiSobrecarga').innerText = docentesSobrecarga;
     }
 
-    // Agrupar por campo: cuenta ocurrencias
-    function agruparPor(data, campo) {
-        const mapa = new Map();
-        data.forEach(item => {
-            const clave = item[campo];
-            mapa.set(clave, (mapa.get(clave) || 0) + 1);
-        });
-        return mapa;
-    }
-
     function actualizarGraficos(data) {
-        // Gráfico 1: Top 10 Planteles
-        const mapaPlanteles = agruparPor(data, 'plantel');
-        let entradas = Array.from(mapaPlanteles.entries());
-        entradas.sort((a, b) => b[1] - a[1]);
-        const topPlanteles = entradas.slice(0, 10);
-        const nombresPlanteles = topPlanteles.map(entry => entry[0]);
-        const frecuencias = topPlanteles.map(entry => entry[1]);
+        // Gráfico de Barras Planteles
+        const conteoPlantel = {};
+        data.forEach(d => conteoPlantel[d.plantel] = (conteoPlantel[d.plantel] || 0) + 1);
+        const sortedPlanteles = Object.entries(conteoPlantel).sort((a,b) => b[1]-a[1]).slice(0,10);
 
         Plotly.newPlot('chartPlanteles', [{
-            x: frecuencias,
-            y: nombresPlanteles,
+            x: sortedPlanteles.map(e => e[1]),
+            y: sortedPlanteles.map(e => e[0]),
             type: 'bar',
             orientation: 'h',
-            marker: {
-                color: frecuencias,
-                colorscale: 'Blues',
-                showscale: false,
-                line: { width: 0.5, color: '#1f6392' }
-            },
-            text: frecuencias.map(v => `Cantidad: ${v}`),
-            textposition: 'outside',
-            hoverinfo: 'x+y'
+            marker: { color: '#2c6e9e' }
         }], {
-            title: { text: '📊 Frecuencia por plantel', font: { size: 14, weight: 'normal' } },
-            margin: { l: 130, r: 30, t: 50, b: 40 },
-            xaxis: { title: 'Número de registros', gridcolor: '#e9ecef' },
-            yaxis: { title: '', automargin: true, categoryorder: 'total ascending' },
-            paper_bgcolor: 'rgba(0,0,0,0)',
-            plot_bgcolor: 'rgba(245,248,250,0.5)',
-            font: { family: 'Segoe UI, Arial' }
-        }, { responsive: true });
+            margin: { l: 150, r: 20, t: 30, b: 40 },
+            yaxis: { automargin: true }
+        }, {responsive: true});
 
-        // Gráfico 2: Distribución por Semestre (pie)
-        const mapaSemestre = agruparPor(data, 'semestre');
-        const labelsSemestre = Array.from(mapaSemestre.keys());
-        const valuesSemestre = Array.from(mapaSemestre.values());
-
-        if (labelsSemestre.length === 0) {
-            Plotly.newPlot('chartSemestre', [{
-                labels: ['Sin datos'],
-                values: [1],
-                type: 'pie',
-                marker: { colors: ['#ccc'] }
-            }], { title: 'Distribución de semestres' });
-            return;
-        }
+        // Gráfico de Pie Semestre
+        const conteoSemestre = {};
+        data.forEach(d => conteoSemestre[d.semestre] = (conteoSemestre[d.semestre] || 0) + 1);
 
         Plotly.newPlot('chartSemestre', [{
-            labels: labelsSemestre,
-            values: valuesSemestre,
+            labels: Object.keys(conteoSemestre),
+            values: Object.values(conteoSemestre),
             type: 'pie',
-            textinfo: 'percent+label',
-            insidetextorientation: 'radial',
-            hole: 0.35,
-            marker: {
-                colors: ['#2c6e9e', '#48a0c2', '#6cc9c9', '#9ad0e5', '#b9d9eb', '#88b8d4', '#5c9cbd'],
-                line: { color: 'white', width: 2 }
-            },
-            hoverinfo: 'label+percent+value'
+            hole: 0.4
         }], {
-            title: { text: '🎓 Proporción por nivel', font: { size: 14 } },
-            showlegend: true,
-            legend: { orientation: 'v', x: 1, y: 0.5, xanchor: 'left', font: { size: 10 } },
-            paper_bgcolor: 'rgba(0,0,0,0)',
-            margin: { t: 60, b: 20, l: 20, r: 80 }
-        }, { responsive: true });
+            margin: { l: 20, r: 20, t: 30, b: 20 }
+        }, {responsive: true});
     }
 
-    // Función para determinar el color según la materia (basado en la especificación)
     function getMateriaColorClass(materia) {
         if (!materia) return 'badge-default';
         const m = materia.toLowerCase();
-        if (m.includes('estudio') || m.includes('literatura') || m.includes('filosofía') || m.includes('lengua') || m.includes('ingles')) 
-            return 'badge-estudios';
-        if (m.includes('biolo') || m.includes('física') || m.includes('química') || m.includes('ciencia') || m.includes('programación'))
-            return 'badge-ciencias';
-        if (m.includes('mate') || m.includes('calculo') || m.includes('algebra') || m.includes('trigonometria') || m.includes('estadistica'))
-            return 'badge-matematicas';
-        if (m.includes('historia') || m.includes('geografia') || m.includes('geografía'))
-            return 'badge-historia';
-        if (m.includes('arte') || m.includes('musica') || m.includes('dibujo') || m.includes('pintura'))
-            return 'badge-artes';
+        if (m.includes('estudio') || m.includes('literatura') || m.includes('inglés')) return 'badge-estudios';
+        if (m.includes('biolo') || m.includes('física') || m.includes('química') || m.includes('programación')) return 'badge-ciencias';
+        if (m.includes('mate') || m.includes('calculo')) return 'badge-matematicas';
+        if (m.includes('historia') || m.includes('geografía')) return 'badge-historia';
+        if (m.includes('arte') || m.includes('musica')) return 'badge-artes';
         return 'badge-default';
     }
 
     function actualizarTablaDetalle(data) {
         const tbody = document.getElementById('tbodyRegistros');
-        if (!tbody) return;
-        
-        if (data.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">No hay registros con los filtros seleccionados</td></tr>';
-            return;
-        }
-
-        // Mostrar todos los registros (máximo 500 para rendimiento visual)
-        const registrosMostrar = data.slice(0, 500);
+        const registrosMostrar = data.slice(0, 100); // Limitamos a 100 por rendimiento
         let html = '';
-        for (let registro of registrosMostrar) {
-            const materiaClass = getMateriaColorClass(registro.materia);
+        registrosMostrar.forEach(reg => {
+            const mClass = getMateriaColorClass(reg.materia);
             html += `<tr>
-                        <td>${escapeHtml(registro.plantel || '')}</td>
-                        <td>${escapeHtml(registro.semestre || '')}</td>
-                        <td>${escapeHtml(registro.turno || '')}</td>
-                        <td><span class="badge-materia ${materiaClass}">${escapeHtml(registro.materia || '')}</span></td>
-                        <td>${escapeHtml(registro.nombre_doc || '')}</td>
-                    </tr>`;
-        }
-        if (data.length > 500) {
-            html += `<tr><td colspan="5" style="text-align:center; font-style:italic;">Mostrando 500 de ${data.length} registros</td></tr>`;
-        }
-        tbody.innerHTML = html;
-    }
-
-    // helper para sanitizar
-    function escapeHtml(str) {
-        if (!str) return '';
-        return str.replace(/[&<>]/g, function(m) {
-            if (m === '&') return '&amp;';
-            if (m === '<') return '&lt;';
-            if (m === '>') return '&gt;';
-            return m;
-        }).replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, function(c) {
-            return c;
+                <td>${reg.plantel}</td>
+                <td>${reg.semestre}</td>
+                <td>${reg.turno}</td>
+                <td><span class="badge-materia ${mClass}">${reg.materia}</span></td>
+                <td>${reg.nombre_doc}</td>
+            </tr>`;
         });
+        tbody.innerHTML = html || '<tr><td colspan="5" style="text-align:center;">Sin resultados</td></tr>';
     }
 </script>
 </body>
