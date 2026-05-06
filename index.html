@@ -344,7 +344,7 @@
                 </tr>
             </thead>
             <tbody id="tbodyRegistros">
-                <tr><td colspan="5" style="text-align:center;">Cargando datos...</td></tr>
+                <tr><td colspan="5" style="text-align:center;">Cargando datos desde GitHub...</td></tr>
             </tbody>
         </table>
     </div>
@@ -356,44 +356,46 @@
 
 <script>
     let dataGlobal = [];
-    // Se intenta cargar desde archivo 'datos.json' (mismo directorio o raw GitHub)
-    // Si el archivo no existe, se usará dataset de demostración para que el dashboard muestre algo funcional.
-    const GITHUB_DATA_URL = 'datos.json'; 
+    // URL relativa: busca el archivo datos.json en el mismo directorio que este index.html (GitHub Pages o repositorio)
+    const GITHUB_DATA_URL = 'datos.json';
 
     window.onload = function() {
+        // Intentar cargar datos desde GitHub (misma carpeta)
         fetch(GITHUB_DATA_URL)
             .then(response => {
-                if (!response.ok) throw new Error("No se encontró datos.json");
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: No se pudo cargar datos.json desde el repositorio`);
+                }
                 return response.json();
             })
             .then(json => {
                 if (Array.isArray(json) && json.length) {
                     dataGlobal = json;
-                    console.log("✅ Datos cargados desde JSON externo");
+                    console.log("✅ Datos cargados exitosamente desde GitHub (datos.json)");
+                    initDashboard();
                 } else {
-                    throw new Error("JSON vacío o inválido");
+                    throw new Error("El archivo datos.json no contiene un array válido o está vacío");
                 }
-                initDashboard();
             })
             .catch(err => {
-                console.warn("⚠️ Fallo carga externa:", err.message);
-                // Intentar recuperar desde localStorage
-                let saved = localStorage.getItem("dataAcademica");
+                console.warn("⚠️ Fallo al cargar datos desde GitHub:", err.message);
+                // Intentar recuperar desde localStorage como respaldo
+                let saved = localStorage.getItem("dataAcademicaBackup");
                 if (saved) {
                     try {
                         dataGlobal = JSON.parse(saved);
                         if (dataGlobal.length) {
-                            console.log("📀 Datos restaurados desde localStorage");
+                            console.log("💾 Datos restaurados desde localStorage (backup)");
                             initDashboard();
                             return;
                         }
                     } catch(e) {}
                 }
-                // Si no hay datos guardados, usar dataset de ejemplo realista (muestra educativa)
-                console.log("📦 Generando dataset de demostración para visualización completa");
+                // Si no hay respaldo, generar dataset de demostración (para que el dashboard siempre funcione)
+                console.log("📦 Generando dataset de demostración (el archivo datos.json no está disponible en el repositorio)");
                 dataGlobal = generarDataSetEjemplo();
-                // guardar para futuras recargas
-                localStorage.setItem("dataAcademica", JSON.stringify(dataGlobal));
+                // Guardar copia en localStorage para futuras recargas
+                localStorage.setItem("dataAcademicaBackup", JSON.stringify(dataGlobal));
                 initDashboard();
             });
     };
@@ -418,13 +420,12 @@
         ];
 
         let registros = [];
-        // Agregar los registros específicos como en la imagen de ejemplo
-        // (para que coincida con el estilo mostrado)
+        // Agregar registros específicos como en la imagen de ejemplo
         registros.push({
             plantel: "Instituto Ágora",
             semestre: "Primer Semestre",
             turno: "Vespertino",
-            materia: "Geografia",
+            materia: "Geografía",
             nombre_doc: "Mtra. Silvia Díaz"
         });
         registros.push({
@@ -438,21 +439,21 @@
             plantel: "Liceo Experimental",
             semestre: "Primer Semestre",
             turno: "Vespertino",
-            materia: "Geografia",
+            materia: "Geografía",
             nombre_doc: "Prof. Oscar Juárez"
         });
         registros.push({
             plantel: "Unidad Norte",
             semestre: "Sexto Semestre",
             turno: "Matutino",
-            materia: "Geografia",
+            materia: "Geografía",
             nombre_doc: "Mtro. Carlos Sánchez"
         });
         registros.push({
             plantel: "Unidad Sur",
             semestre: "Cuarto Semestre",
             turno: "Matutino",
-            materia: "Geografia",
+            materia: "Geografía",
             nombre_doc: "Mtro. Jorge Ramírez"
         });
         registros.push({
@@ -472,7 +473,7 @@
             let nombre_doc = docentesBase[Math.floor(Math.random() * docentesBase.length)];
             registros.push({ plantel, semestre, turno, materia, nombre_doc });
         }
-        // Agregar algunos casos donde un docente tiene más de 3 materias para que se vea la alerta de sobrecarga
+        // Agregar casos donde un docente tiene más de 3 materias para que se vea la alerta de sobrecarga
         for (let i = 0; i < 5; i++) {
             registros.push({
                 plantel: "Unidad Norte",
@@ -671,7 +672,7 @@
             return 'badge-ciencias';
         if (m.includes('mate') || m.includes('calculo') || m.includes('algebra') || m.includes('trigonometria') || m.includes('estadistica'))
             return 'badge-matematicas';
-        if (m.includes('historia') || m.includes('geografia'))
+        if (m.includes('historia') || m.includes('geografia') || m.includes('geografía'))
             return 'badge-historia';
         if (m.includes('arte') || m.includes('musica') || m.includes('dibujo') || m.includes('pintura'))
             return 'badge-artes';
@@ -718,8 +719,6 @@
             return c;
         });
     }
-
-    // Nota: se ha agregado la tabla con estilo y colores por materia según los códigos solicitados (Verde, Azul, Rojo, Amarillo, Fondo: Artes)
 </script>
 </body>
 </html>
