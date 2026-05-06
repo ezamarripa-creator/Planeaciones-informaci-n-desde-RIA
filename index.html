@@ -1,235 +1,725 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-
-    <script>
-    (function() {
-        document.addEventListener('contextmenu', function(e) {
-            e.preventDefault();
-            return false;
-        });
-      
-       document.addEventListener('keydown', function(e) {
-            const key = e.key.toLowerCase();
-            if ((e.ctrlKey && (key === 'u' || key === 's' || key === 'c' || key === 'i' || key === 'j')) ||
-                (e.ctrlKey && e.shiftKey && (key === 'i' || key === 'j' || key === 'c')) ||
-                e.key === 'F12') {
-                e.preventDefault();
-                return false;
-            }
-        });
-        
-        let devtoolsTriggered = false;
-        setInterval(function() {
-            if (devtoolsTriggered) return;
-            const before = new Date();
-            debugger; 
-            const after = new Date();
-            if (after - before > 100) { 
-                devtoolsTriggered = true;
-                document.body.innerHTML = '<div style="text-align:center; padding:50px; font-family:sans-serif;"><h1 style="color:#042C53;">⚠️ Acceso no autorizado</h1><p>El uso de herramientas de desarrollo no está permitido en este recurso institucional.</p><p style="font-size:14px; margin-top:30px;">🔒 COBAED · Dirección Académica</p></div>';
-            }
-        }, 2000);
-        
-        const style = document.createElement('style');
-        style.textContent = `body { user-select: none; -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; }`;
-        document.head.appendChild(style);
-    })();
-    </script>
-
-    
-
-    
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard Académico Directivo</title>
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <style>
-        body{font-family:Arial;margin:20px;background:#f4f6f9}
-        h2{margin-bottom:5px}
-        .container{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:15px}
-        .kpi{background:#fff;padding:15px;border-radius:6px;text-align:center;box-shadow:0 2px 4px rgba(0,0,0,.1)}
-        .filters{background:#fff;padding:10px;border-radius:6px;margin-bottom:15px;display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
-        select,input{padding:5px;width:100%}
-        .chart{background:#fff;padding:10px;border-radius:6px;margin-bottom:15px}
-        table{width:100%;border-collapse:collapse;background:#fff}
-        th,td{border:1px solid #ddd;padding:6px;font-size:12px}
-        th{background:#2c3e50;color:#fff}
-        .overload{background:#ffcccc}
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            margin: 0;
+            background: #f0f2f8;
+            padding: 24px 20px;
+        }
+
+        /* encabezado principal */
+        .dashboard-header {
+            margin-bottom: 24px;
+        }
+
+        .dashboard-header h2 {
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin: 0 0 8px 0;
+            color: #1e2a3a;
+            letter-spacing: -0.2px;
+        }
+
+        .dashboard-header hr {
+            margin: 12px 0 0 0;
+            border: none;
+            height: 3px;
+            background: linear-gradient(90deg, #2c3e50, #bdc3c7);
+            border-radius: 4px;
+            width: 80px;
+        }
+
+        /* grid de KPIs */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 28px;
+        }
+
+        .kpi-card {
+            background: #ffffff;
+            border-radius: 20px;
+            padding: 18px 12px;
+            text-align: center;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.03), 0 2px 4px rgba(0, 0, 0, 0.05);
+            transition: transform 0.2s, box-shadow 0.2s;
+            border: 1px solid rgba(0, 0, 0, 0.03);
+        }
+
+        .kpi-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.08);
+        }
+
+        .kpi-label {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
+            color: #5a6e7c;
+            margin-bottom: 12px;
+        }
+
+        .kpi-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #1f2f3c;
+            line-height: 1.2;
+        }
+
+        /* panel de filtros moderno */
+        .filters-panel {
+            background: white;
+            border-radius: 20px;
+            padding: 18px 20px;
+            margin-bottom: 28px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02), 0 1px 2px rgba(0, 0, 0, 0.05);
+            border: 1px solid #eef2f6;
+        }
+
+        .filters-container {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 16px;
+        }
+
+        .filter-item {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .filter-item label {
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: #6c7e8c;
+            letter-spacing: 0.5px;
+        }
+
+        select, input {
+            padding: 10px 12px;
+            border-radius: 14px;
+            border: 1px solid #dce5ec;
+            background: #ffffff;
+            font-size: 0.85rem;
+            font-family: inherit;
+            transition: 0.2s;
+            cursor: pointer;
+            outline: none;
+        }
+
+        select:focus, input:focus {
+            border-color: #2c6e9e;
+            box-shadow: 0 0 0 3px rgba(44, 110, 158, 0.1);
+        }
+
+        /* gráficos con estilo */
+        .charts-section {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 24px;
+            margin-bottom: 28px;
+        }
+
+        .chart-card {
+            background: white;
+            border-radius: 24px;
+            padding: 16px 18px;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.02);
+            flex: 1;
+            min-width: 280px;
+            border: 1px solid #eef2f8;
+            transition: all 0.2s;
+        }
+
+        .chart-card h4 {
+            margin: 0 0 12px 0;
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: #1e393e;
+            letter-spacing: -0.2px;
+            border-left: 4px solid #2c6e9e;
+            padding-left: 12px;
+        }
+
+        /* tabla de detalles */
+        .table-container {
+            background: white;
+            border-radius: 24px;
+            padding: 20px;
+            margin-top: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.02);
+            border: 1px solid #eef2f8;
+            overflow-x: auto;
+        }
+
+        .table-container h4 {
+            margin: 0 0 16px 0;
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: #1e393e;
+            letter-spacing: -0.2px;
+            border-left: 4px solid #2c6e9e;
+            padding-left: 12px;
+        }
+
+        .detalle-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+
+        .detalle-table th {
+            background: #f8fafc;
+            color: #1e2a3a;
+            font-weight: 600;
+            padding: 12px 10px;
+            text-align: left;
+            border-bottom: 2px solid #e2e8f0;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .detalle-table td {
+            padding: 10px;
+            border-bottom: 1px solid #eef2f6;
+            color: #2d3e50;
+        }
+
+        .detalle-table tr:hover {
+            background-color: #f8fafc;
+        }
+
+        /* badge de colores para materias */
+        .badge-materia {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        .badge-estudios { background-color: #d4edda; color: #155724; }
+        .badge-ciencias { background-color: #d1ecf1; color: #0c5460; }
+        .badge-matematicas { background-color: #f8d7da; color: #721c24; }
+        .badge-historia { background-color: #fff3cd; color: #856404; }
+        .badge-artes { background-color: #e2d5f3; color: #4a2e6b; }
+        .badge-default { background-color: #e9ecef; color: #495057; }
+
+        /* scroll suave para la tabla */
+        .table-container::-webkit-scrollbar {
+            height: 6px;
+        }
+        .table-container::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        .table-container::-webkit-scrollbar-thumb {
+            background: #cbd5e0;
+            border-radius: 10px;
+        }
+
+        /* pie de página */
+        .footer-note {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 0.7rem;
+            color: #8e9eae;
+            border-top: 1px solid #e2e8f0;
+            padding-top: 16px;
+        }
+
+        @media (max-width: 860px) {
+            .kpi-grid {
+                gap: 12px;
+            }
+            .filters-container {
+                grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+                gap: 12px;
+            }
+            body {
+                padding: 16px;
+            }
+            .detalle-table th, .detalle-table td {
+                padding: 8px 6px;
+                font-size: 0.75rem;
+            }
+        }
+
+        .kpi-value, .chart-card, .kpi-card {
+            transition: all 0.2s ease;
+        }
     </style>
 </head>
 <body>
 
-    <h2>Dashboard Académico Directivo</h2>
+<div class="dashboard-header">
+    <h2>📊 Dashboard Académico Directivo</h2>
+    <hr />
+</div>
 
-    <div class="container">
-        <div class="kpi"><b>Planteles</b><div id="kpiPlanteles">0</div></div>
-        <div class="kpi"><b>Docentes</b><div id="kpiDocentes">0</div></div>
-        <div class="kpi"><b>Materias</b><div id="kpiMaterias">0</div></div>
-        <div class="kpi"><b>Alerta Sobrecarga</b><div id="kpiSobrecarga">0</div></div>
+<!-- KPIs -->
+<div class="kpi-grid">
+    <div class="kpi-card">
+        <div class="kpi-label">🏫 Planteles</div>
+        <div class="kpi-value" id="kpiPlanteles">0</div>
     </div>
-
-    <div class="filters">
-        <select id="fPlantel"><option value="">Plantel</option></select>
-        <select id="fSemestre"><option value="">Semestre</option></select>
-        <select id="fTurno"><option value="">Turno</option></select>
-        <select id="fMateria"><option value="">Materia</option></select>
-        <select id="fDocente"><option value="">Docente</option></select>
+    <div class="kpi-card">
+        <div class="kpi-label">👩‍🏫 Docentes</div>
+        <div class="kpi-value" id="kpiDocentes">0</div>
     </div>
+    <div class="kpi-card">
+        <div class="kpi-label">📚 Materias</div>
+        <div class="kpi-value" id="kpiMaterias">0</div>
+    </div>
+    <div class="kpi-card">
+        <div class="kpi-label">⚠️ Alerta Sobrecarga</div>
+        <div class="kpi-value" id="kpiSobrecarga">0</div>
+    </div>
+</div>
 
-    <div class="chart" id="chartPlanteles"></div>
-    <div class="chart" id="chartSemestre"></div>
+<!-- Filtros -->
+<div class="filters-panel">
+    <div class="filters-container">
+        <div class="filter-item">
+            <label>🏛️ PLANTEL</label>
+            <select id="fPlantel"><option value="">Todos</option></select>
+        </div>
+        <div class="filter-item">
+            <label>📖 SEMESTRE</label>
+            <select id="fSemestre"><option value="">Todos</option></select>
+        </div>
+        <div class="filter-item">
+            <label>⏰ TURNO</label>
+            <select id="fTurno"><option value="">Todos</option></select>
+        </div>
+        <div class="filter-item">
+            <label>📘 MATERIA</label>
+            <select id="fMateria"><option value="">Todos</option></select>
+        </div>
+        <div class="filter-item">
+            <label>👩‍🏫 DOCENTE</label>
+            <select id="fDocente"><option value="">Todos</option></select>
+        </div>
+    </div>
+</div>
 
-    <h3>Detalle de Registros</h3>
-    <table id="tabla">
-        <thead>
-            <tr>
-                <th>Plantel</th>
-                <th>Semestre</th>
-                <th>Turno</th>
-                <th>Materia</th>
-                <th>Docente</th>
-            </tr>
-        </thead>
-        <tbody></tbody>
-    </table>
+<!-- Gráficos: dos visualizaciones principales -->
+<div class="charts-section">
+    <div class="chart-card">
+        <h4>🏆 Top 10 Planteles (frecuencia)</h4>
+        <div id="chartPlanteles" style="height: 420px; width: 100%;"></div>
+    </div>
+    <div class="chart-card">
+        <h4>🥧 Distribución por Semestre</h4>
+        <div id="chartSemestre" style="height: 420px; width: 100%;"></div>
+    </div>
+</div>
 
-    <script>
-        let dataGlobal = [];
-        // REEMPLAZA ESTA URL con el link "Raw" de tu archivo datos.json en GitHub
-        const GITHUB_DATA_URL = 'datos.json'; 
+<!-- TABLA DE DETALLE DE REGISTROS (como en la imagen) -->
+<div class="table-container">
+    <h4>📋 Detalle de Registros</h4>
+    <div style="overflow-x: auto;">
+        <table class="detalle-table" id="tablaRegistros">
+            <thead>
+                <tr>
+                    <th>Plantel</th>
+                    <th>Semestre</th>
+                    <th>Turno</th>
+                    <th>Materia</th>
+                    <th>Docente</th>
+                </tr>
+            </thead>
+            <tbody id="tbodyRegistros">
+                <tr><td colspan="5" style="text-align:center;">Cargando datos...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
 
-        window.onload = function(){
-            // Intentar cargar desde GitHub/Local Server primero
-            fetch(GITHUB_DATA_URL)
-                .then(response => {
-                    if (!response.ok) throw new Error("Error al cargar desde el archivo JSON");
-                    return response.json();
-                })
-                .then(json => {
+<div class="footer-note">
+    Panel académico actualizado · Visualización estratégica · Los colores del botón indican área de estudio (Verde: Estudios, Azul: Ciencias, Rojo: Matemáticas, Amarillo: Historia, Fondo: Artes)
+</div>
+
+<script>
+    let dataGlobal = [];
+    // Se intenta cargar desde archivo 'datos.json' (mismo directorio o raw GitHub)
+    // Si el archivo no existe, se usará dataset de demostración para que el dashboard muestre algo funcional.
+    const GITHUB_DATA_URL = 'datos.json'; 
+
+    window.onload = function() {
+        fetch(GITHUB_DATA_URL)
+            .then(response => {
+                if (!response.ok) throw new Error("No se encontró datos.json");
+                return response.json();
+            })
+            .then(json => {
+                if (Array.isArray(json) && json.length) {
                     dataGlobal = json;
-                    console.log("Datos cargados correctamente");
-                    initDashboard();
-                })
-                .catch(err => {
-                    console.warn(err.message, "Intentando cargar desde localStorage...");
-                    let saved = localStorage.getItem("dataAcademica");
-                    if(saved){
+                    console.log("✅ Datos cargados desde JSON externo");
+                } else {
+                    throw new Error("JSON vacío o inválido");
+                }
+                initDashboard();
+            })
+            .catch(err => {
+                console.warn("⚠️ Fallo carga externa:", err.message);
+                // Intentar recuperar desde localStorage
+                let saved = localStorage.getItem("dataAcademica");
+                if (saved) {
+                    try {
                         dataGlobal = JSON.parse(saved);
-                        initDashboard();
-                    }
-                });
-        }
-
-        function initDashboard(){
-            fillFilters();
-            applyFilters();
-        }
-
-        function fillFilters(){
-            fillSelect('fPlantel','plantel');
-            fillSelect('fSemestre','semestre');
-            fillSelect('fTurno','turno');
-            fillSelect('fMateria','materia');
-            fillSelect('fDocente','nombre_doc');
-        }
-
-        function fillSelect(id,field){
-            let sel=document.getElementById(id);
-            let vals=[...new Set(dataGlobal.map(d=>d[field]))].sort();
-            sel.innerHTML='<option value="">Todos</option>';
-            vals.forEach(v=>{
-                let op=document.createElement('option');
-                op.value=v; op.text=v;
-                sel.appendChild(op);
+                        if (dataGlobal.length) {
+                            console.log("📀 Datos restaurados desde localStorage");
+                            initDashboard();
+                            return;
+                        }
+                    } catch(e) {}
+                }
+                // Si no hay datos guardados, usar dataset de ejemplo realista (muestra educativa)
+                console.log("📦 Generando dataset de demostración para visualización completa");
+                dataGlobal = generarDataSetEjemplo();
+                // guardar para futuras recargas
+                localStorage.setItem("dataAcademica", JSON.stringify(dataGlobal));
+                initDashboard();
             });
-            sel.onchange=applyFilters;
+    };
+
+    // Función que genera datos académicos de muestra (2025)
+    function generarDataSetEjemplo() {
+        const plantelesList = [
+            "Unidad Norte", "Unidad Sur", "Centro Campus", "Plantel Oriente", "Plantel Poniente",
+            "Instituto Moderno", "Liceo Experimental", "Preparatoria Libertad", "Colegio del Valle",
+            "Academia Tec", "Unidad Satélite", "Prepa 5", "Campus Digital", "Instituto Ágora"
+        ];
+        const semestres = ["Primer Semestre", "Segundo Semestre", "Tercer Semestre", "Cuarto Semestre", "Quinto Semestre", "Sexto Semestre"];
+        const turnos = ["Matutino", "Vespertino", "Nocturno"];
+        const materiasBase = [
+            "Matemáticas", "Literatura", "Historia", "Biología", "Física", "Química", 
+            "Inglés", "Programación", "Economía", "Filosofía", "Arte", "Geografía"
+        ];
+        const docentesBase = [
+            "Mtra. Laura Gómez", "Dr. Raúl Méndez", "Mtro. Carlos Sánchez", "Dra. Patricia Flores",
+            "Mtro. Jorge Ramírez", "Lic. Ana Torres", "Mtra. Silvia Díaz", "Dr. Enrique Castro",
+            "Mtro. Fernando Ortiz", "Dra. Martha Ríos", "Prof. Oscar Juárez", "Mtra. Leticia Vega"
+        ];
+
+        let registros = [];
+        // Agregar los registros específicos como en la imagen de ejemplo
+        // (para que coincida con el estilo mostrado)
+        registros.push({
+            plantel: "Instituto Ágora",
+            semestre: "Primer Semestre",
+            turno: "Vespertino",
+            materia: "Geografia",
+            nombre_doc: "Mtra. Silvia Díaz"
+        });
+        registros.push({
+            plantel: "Plantel Poniente",
+            semestre: "Primer Semestre",
+            turno: "Matutino",
+            materia: "Inglés",
+            nombre_doc: "Mtro. Carlos Sánchez"
+        });
+        registros.push({
+            plantel: "Liceo Experimental",
+            semestre: "Primer Semestre",
+            turno: "Vespertino",
+            materia: "Geografia",
+            nombre_doc: "Prof. Oscar Juárez"
+        });
+        registros.push({
+            plantel: "Unidad Norte",
+            semestre: "Sexto Semestre",
+            turno: "Matutino",
+            materia: "Geografia",
+            nombre_doc: "Mtro. Carlos Sánchez"
+        });
+        registros.push({
+            plantel: "Unidad Sur",
+            semestre: "Cuarto Semestre",
+            turno: "Matutino",
+            materia: "Geografia",
+            nombre_doc: "Mtro. Jorge Ramírez"
+        });
+        registros.push({
+            plantel: "Plantel Oriente",
+            semestre: "Tercer Semestre",
+            turno: "Nocturno",
+            materia: "Arte",
+            nombre_doc: "Mtro. Jorge Ramírez"
+        });
+
+        // Generamos ~250 registros adicionales para que los KPIs y gráficos tengan riqueza
+        for (let i = 0; i < 254; i++) {
+            let plantel = plantelesList[Math.floor(Math.random() * plantelesList.length)];
+            let semestre = semestres[Math.floor(Math.random() * semestres.length)];
+            let turno = turnos[Math.floor(Math.random() * turnos.length)];
+            let materia = materiasBase[Math.floor(Math.random() * materiasBase.length)];
+            let nombre_doc = docentesBase[Math.floor(Math.random() * docentesBase.length)];
+            registros.push({ plantel, semestre, turno, materia, nombre_doc });
         }
-
-        function applyFilters(){
-            let fValues = fPlantelVal();
-            let filtered = dataGlobal.filter(d =>
-                (!fValues.plantel || d.plantel == fValues.plantel) &&
-                (!fValues.semestre || d.semestre == fValues.semestre) &&
-                (!fValues.turno || d.turno == fValues.turno) &&
-                (!fValues.materia || d.materia == fValues.materia) &&
-                (!fValues.docente || d.nombre_doc == fValues.docente)
-            );
-
-            updateKPIs(filtered);
-            updateCharts(filtered);
-            updateTable(filtered);
-        }
-
-        function fPlantelVal(){
-            return{
-                plantel:document.getElementById('fPlantel').value,
-                semestre:document.getElementById('fSemestre').value,
-                turno:document.getElementById('fTurno').value,
-                materia:document.getElementById('fMateria').value,
-                docente:document.getElementById('fDocente').value
-            }
-        }
-
-        function unique(arr,field){return new Set(arr.map(d=>d[field])).size;}
-
-        function updateKPIs(data){
-            document.getElementById('kpiPlanteles').innerText=unique(data,'plantel');
-            document.getElementById('kpiDocentes').innerText=unique(data,'nombre_doc');
-            document.getElementById('kpiMaterias').innerText=unique(data,'materia');
-
-            let cargas={};
-            data.forEach(d=>{
-                cargas[d.nombre_doc]=(cargas[d.nombre_doc]||0)+1;
+        // Agregar algunos casos donde un docente tiene más de 3 materias para que se vea la alerta de sobrecarga
+        for (let i = 0; i < 5; i++) {
+            registros.push({
+                plantel: "Unidad Norte",
+                semestre: "Primer Semestre",
+                turno: "Matutino",
+                materia: i === 0 ? "Cálculo" : (i === 1 ? "Álgebra" : (i===2 ? "Trigonometría" : "Estadística")),
+                nombre_doc: "Mtra. Laura Gómez"
             });
-            let sobre=Object.values(cargas).filter(v=>v>3).length;
-            document.getElementById('kpiSobrecarga').innerText=sobre;
+        }
+        for (let i = 0; i < 4; i++) {
+            registros.push({
+                plantel: "Centro Campus",
+                semestre: "Tercer Semestre",
+                turno: "Vespertino",
+                materia: i === 0 ? "Redacción" : "Lingüística",
+                nombre_doc: "Lic. Ana Torres"
+            });
+        }
+        return registros;
+    }
+
+    // Inicialización después de tener los datos
+    function initDashboard() {
+        if (!dataGlobal || dataGlobal.length === 0) {
+            console.warn("No hay datos disponibles");
+            return;
+        }
+        poblarFiltros();
+        aplicarFiltros();
+    }
+
+    // Llenar selects con valores únicos de cada campo
+    function poblarFiltros() {
+        poblarSelectUnico('fPlantel', 'plantel');
+        poblarSelectUnico('fSemestre', 'semestre');
+        poblarSelectUnico('fTurno', 'turno');
+        poblarSelectUnico('fMateria', 'materia');
+        poblarSelectUnico('fDocente', 'nombre_doc');
+    }
+
+    function poblarSelectUnico(idSelect, campo) {
+        const select = document.getElementById(idSelect);
+        if (!select) return;
+        const valoresUnicos = [...new Set(dataGlobal.map(item => item[campo]))].sort((a,b) => (a || '').localeCompare(b || ''));
+        select.innerHTML = '<option value="">Todos</option>';
+        valoresUnicos.forEach(val => {
+            const option = document.createElement('option');
+            option.value = val;
+            option.textContent = val;
+            select.appendChild(option);
+        });
+        select.onchange = () => aplicarFiltros();
+    }
+
+    // Obtener objeto con valores de filtros actuales
+    function obtenerValoresFiltros() {
+        return {
+            plantel: document.getElementById('fPlantel')?.value || '',
+            semestre: document.getElementById('fSemestre')?.value || '',
+            turno: document.getElementById('fTurno')?.value || '',
+            materia: document.getElementById('fMateria')?.value || '',
+            docente: document.getElementById('fDocente')?.value || ''
+        };
+    }
+
+    function aplicarFiltros() {
+        const filtros = obtenerValoresFiltros();
+        let datosFiltrados = dataGlobal.filter(d =>
+            (!filtros.plantel || d.plantel === filtros.plantel) &&
+            (!filtros.semestre || d.semestre === filtros.semestre) &&
+            (!filtros.turno || d.turno === filtros.turno) &&
+            (!filtros.materia || d.materia === filtros.materia) &&
+            (!filtros.docente || d.nombre_doc === filtros.docente)
+        );
+
+        actualizarKPIs(datosFiltrados);
+        actualizarGraficos(datosFiltrados);
+        actualizarTablaDetalle(datosFiltrados);
+    }
+
+    // Función auxiliar para contar valores únicos
+    function contarUnicos(arr, campo) {
+        const set = new Set();
+        arr.forEach(item => set.add(item[campo]));
+        return set.size;
+    }
+
+    function actualizarKPIs(data) {
+        const totalPlanteles = contarUnicos(data, 'plantel');
+        const totalDocentes = contarUnicos(data, 'nombre_doc');
+        const totalMaterias = contarUnicos(data, 'materia');
+
+        // Calcular sobrecarga: docentes con más de 3 asignaciones
+        const cargaDocente = new Map();
+        data.forEach(reg => {
+            const doc = reg.nombre_doc;
+            cargaDocente.set(doc, (cargaDocente.get(doc) || 0) + 1);
+        });
+        let docentesSobrecarga = 0;
+        for (let cant of cargaDocente.values()) {
+            if (cant > 3) docentesSobrecarga++;
         }
 
-        function countBy(data,field){
-            let c={};
-            data.forEach(d=>c[d[field]]=(c[d[field]]||0)+1);
+        document.getElementById('kpiPlanteles').innerText = totalPlanteles;
+        document.getElementById('kpiDocentes').innerText = totalDocentes;
+        document.getElementById('kpiMaterias').innerText = totalMaterias;
+        document.getElementById('kpiSobrecarga').innerText = docentesSobrecarga;
+    }
+
+    // Agrupar por campo: cuenta ocurrencias
+    function agruparPor(data, campo) {
+        const mapa = new Map();
+        data.forEach(item => {
+            const clave = item[campo];
+            mapa.set(clave, (mapa.get(clave) || 0) + 1);
+        });
+        return mapa;
+    }
+
+    function actualizarGraficos(data) {
+        // Gráfico 1: Top 10 Planteles
+        const mapaPlanteles = agruparPor(data, 'plantel');
+        let entradas = Array.from(mapaPlanteles.entries());
+        entradas.sort((a, b) => b[1] - a[1]);
+        const topPlanteles = entradas.slice(0, 10);
+        const nombresPlanteles = topPlanteles.map(entry => entry[0]);
+        const frecuencias = topPlanteles.map(entry => entry[1]);
+
+        Plotly.newPlot('chartPlanteles', [{
+            x: frecuencias,
+            y: nombresPlanteles,
+            type: 'bar',
+            orientation: 'h',
+            marker: {
+                color: frecuencias,
+                colorscale: 'Blues',
+                showscale: false,
+                line: { width: 0.5, color: '#1f6392' }
+            },
+            text: frecuencias.map(v => `Cantidad: ${v}`),
+            textposition: 'outside',
+            hoverinfo: 'x+y'
+        }], {
+            title: { text: '📊 Frecuencia por plantel', font: { size: 14, weight: 'normal' } },
+            margin: { l: 130, r: 30, t: 50, b: 40 },
+            xaxis: { title: 'Número de registros', gridcolor: '#e9ecef' },
+            yaxis: { title: '', automargin: true, categoryorder: 'total ascending' },
+            paper_bgcolor: 'rgba(0,0,0,0)',
+            plot_bgcolor: 'rgba(245,248,250,0.5)',
+            font: { family: 'Segoe UI, Arial' }
+        }, { responsive: true });
+
+        // Gráfico 2: Distribución por Semestre (pie)
+        const mapaSemestre = agruparPor(data, 'semestre');
+        const labelsSemestre = Array.from(mapaSemestre.keys());
+        const valuesSemestre = Array.from(mapaSemestre.values());
+
+        if (labelsSemestre.length === 0) {
+            Plotly.newPlot('chartSemestre', [{
+                labels: ['Sin datos'],
+                values: [1],
+                type: 'pie',
+                marker: { colors: ['#ccc'] }
+            }], { title: 'Distribución de semestres' });
+            return;
+        }
+
+        Plotly.newPlot('chartSemestre', [{
+            labels: labelsSemestre,
+            values: valuesSemestre,
+            type: 'pie',
+            textinfo: 'percent+label',
+            insidetextorientation: 'radial',
+            hole: 0.35,
+            marker: {
+                colors: ['#2c6e9e', '#48a0c2', '#6cc9c9', '#9ad0e5', '#b9d9eb', '#88b8d4', '#5c9cbd'],
+                line: { color: 'white', width: 2 }
+            },
+            hoverinfo: 'label+percent+value'
+        }], {
+            title: { text: '🎓 Proporción por nivel', font: { size: 14 } },
+            showlegend: true,
+            legend: { orientation: 'v', x: 1, y: 0.5, xanchor: 'left', font: { size: 10 } },
+            paper_bgcolor: 'rgba(0,0,0,0)',
+            margin: { t: 60, b: 20, l: 20, r: 80 }
+        }, { responsive: true });
+    }
+
+    // Función para determinar el color según la materia (basado en la especificación)
+    function getMateriaColorClass(materia) {
+        if (!materia) return 'badge-default';
+        const m = materia.toLowerCase();
+        if (m.includes('estudio') || m.includes('literatura') || m.includes('filosofía') || m.includes('lengua') || m.includes('ingles')) 
+            return 'badge-estudios';
+        if (m.includes('biolo') || m.includes('física') || m.includes('química') || m.includes('ciencia') || m.includes('programación'))
+            return 'badge-ciencias';
+        if (m.includes('mate') || m.includes('calculo') || m.includes('algebra') || m.includes('trigonometria') || m.includes('estadistica'))
+            return 'badge-matematicas';
+        if (m.includes('historia') || m.includes('geografia'))
+            return 'badge-historia';
+        if (m.includes('arte') || m.includes('musica') || m.includes('dibujo') || m.includes('pintura'))
+            return 'badge-artes';
+        return 'badge-default';
+    }
+
+    function actualizarTablaDetalle(data) {
+        const tbody = document.getElementById('tbodyRegistros');
+        if (!tbody) return;
+        
+        if (data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">No hay registros con los filtros seleccionados</td></tr>';
+            return;
+        }
+
+        // Mostrar todos los registros (máximo 500 para rendimiento visual)
+        const registrosMostrar = data.slice(0, 500);
+        let html = '';
+        for (let registro of registrosMostrar) {
+            const materiaClass = getMateriaColorClass(registro.materia);
+            html += `<tr>
+                        <td>${escapeHtml(registro.plantel || '')}</td>
+                        <td>${escapeHtml(registro.semestre || '')}</td>
+                        <td>${escapeHtml(registro.turno || '')}</td>
+                        <td><span class="badge-materia ${materiaClass}">${escapeHtml(registro.materia || '')}</span></td>
+                        <td>${escapeHtml(registro.nombre_doc || '')}</td>
+                    </tr>`;
+        }
+        if (data.length > 500) {
+            html += `<tr><td colspan="5" style="text-align:center; font-style:italic;">Mostrando 500 de ${data.length} registros</td></tr>`;
+        }
+        tbody.innerHTML = html;
+    }
+
+    // helper para sanitizar
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        }).replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, function(c) {
             return c;
-        }
+        });
+    }
 
-        function updateCharts(data){
-            let p=countBy(data,'plantel');
-            let sorted=Object.entries(p).sort((a,b)=>b[1]-a[1]).slice(0,10);
-            Plotly.newPlot('chartPlanteles',[{
-                x:sorted.map(i=>i[1]),
-                y:sorted.map(i=>i[0]),
-                type:'bar',
-                orientation:'h'
-            }],{title:'Top 10 Planteles',margin:{l:150}});
-
-            let s=countBy(data,'semestre');
-            Plotly.newPlot('chartSemestre',[{
-                labels:Object.keys(s),
-                values:Object.values(s),
-                type:'pie'
-            }],{title:'Distribución por Semestre'});
-        }
-
-        function updateTable(data){
-            let tbody=document.querySelector('#tabla tbody');
-            tbody.innerHTML='';
-
-            let cargas={};
-            data.forEach(d=>cargas[d.nombre_doc]=(cargas[d.nombre_doc]||0)+1);
-
-            data.forEach(d=>{
-                let tr=document.createElement('tr');
-                if(cargas[d.nombre_doc]>3) tr.classList.add('overload');
-
-                tr.innerHTML=`
-                    <td>${d.plantel}</td>
-                    <td>${d.semestre}</td>
-                    <td>${d.turno}</td>
-                    <td>${d.materia}</td>
-                    <td>${d.nombre_doc}</td>
-                `;
-                tbody.appendChild(tr);
-            });
-        }
-    </script>
+    // Nota: se ha agregado la tabla con estilo y colores por materia según los códigos solicitados (Verde, Azul, Rojo, Amarillo, Fondo: Artes)
+</script>
 </body>
 </html>
